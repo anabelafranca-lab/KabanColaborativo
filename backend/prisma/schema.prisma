@@ -1,0 +1,85 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model User {
+  id String @id @default(cuid())
+  name String
+  email String @unique
+  password String
+  createdAt DateTime @default(now())
+  memberships Membership[]
+  comments Comment[]
+  activities Activity[]
+  notifications Notification[]
+}
+model Project {
+  id String @id @default(cuid())
+  name String
+  description String @default("")
+  createdAt DateTime @default(now())
+  memberships Membership[]
+  columns BoardColumn[]
+  activities Activity[]
+}
+model Membership {
+  id String @id @default(cuid())
+  userId String
+  projectId String
+  role String @default("member")
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  @@unique([userId,projectId])
+}
+model BoardColumn {
+  id String @id @default(cuid())
+  name String
+  position Int @default(0)
+  projectId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  cards Card[]
+}
+model Card {
+  id String @id @default(cuid())
+  title String
+  description String @default("")
+  position Int @default(0)
+  version Int @default(0)
+  createdAt DateTime @default(now())
+  columnId String
+  column BoardColumn @relation(fields:[columnId],references:[id],onDelete:Cascade)
+  comments Comment[]
+  activities Activity[]
+}
+model Comment {
+  id String @id @default(cuid())
+  text String
+  createdAt DateTime @default(now())
+  cardId String
+  authorId String
+  card Card @relation(fields:[cardId],references:[id],onDelete:Cascade)
+  author User @relation(fields:[authorId],references:[id],onDelete:Cascade)
+}
+model Activity {
+  id String @id @default(cuid())
+  action String
+  details String @default("")
+  createdAt DateTime @default(now())
+  projectId String
+  cardId String?
+  actorId String
+  project Project @relation(fields:[projectId],references:[id],onDelete:Cascade)
+  card Card? @relation(fields:[cardId],references:[id],onDelete:SetNull)
+  actor User @relation(fields:[actorId],references:[id],onDelete:Cascade)
+}
+model Notification {
+  id String @id @default(cuid())
+  message String
+  read Boolean @default(false)
+  createdAt DateTime @default(now())
+  userId String
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
